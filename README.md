@@ -12,7 +12,8 @@ Not available yet. The final submission will include a public, no-sign-in demo l
 - Git
 - Docker Desktop or Docker Engine with Compose v2
 - At least 15 GB free disk space for the unified image, service images, caches, and model weights
-- macOS or Linux (Windows users should use WSL for the documented shell commands)
+- macOS or Linux; Windows users can run the demo bootstrap in PowerShell and should use WSL
+  for the other documented shell commands
 
 UV installs the pinned Python 3.12 runtime when needed. PyCharm can use `.venv/bin/python` after synchronization.
 
@@ -120,17 +121,23 @@ AI_SUPPORT_TEST_OLLAMA_MODEL=llama3.1:latest \
 ## Build and run the container
 
 Copy `.env.example` to `.env` and replace all placeholder credentials. The complete clean-clone
-bootstrap is one command:
+bootstrap is one command. On macOS/Linux (or in WSL):
 
 ```bash
 ./scripts/bootstrap_demo.sh --pull-model
 ```
 
-`--pull-model` is explicit authorization to download the configured Ollama model; omit it on a later
-verification when the model exists in the persistent volume. Existing selected immutable RAG releases
-are reused and the acceptance probe confirms their database indexes are still present. The command
-builds the images, starts infrastructure, trains
-and approves both routers, builds both PostgreSQL RAG indexes, starts the application/monitoring
+On Windows PowerShell:
+
+```powershell
+.\scripts\bootstrap_demo.ps1 -PullModel
+```
+
+`--pull-model` (Bash) or `-PullModel` (PowerShell) explicitly authorizes downloading the configured
+Ollama model; omit it on a later verification when the model exists in the persistent volume.
+Existing selected immutable RAG releases are reused and the acceptance probe confirms their database
+indexes are still present. The command builds the images, starts infrastructure, trains and approves
+both routers, builds both PostgreSQL RAG indexes, starts the application/monitoring
 services, and runs an authenticated cited-answer acceptance probe. It stops immediately if a gate or
 verification fails.
 
