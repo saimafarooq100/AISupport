@@ -1,0 +1,13 @@
+services:
+  api:
+    environment:
+      AI_SUPPORT_AI_CONCURRENCY: "1"
+      MLFLOW_HTTP_REQUEST_MAX_RETRIES: "1"
+      MLFLOW_HTTP_REQUEST_TIMEOUT: "15"
+      MLFLOW_HTTP_REQUEST_BACKOFF_FACTOR: "1"
+      AI_SUPPORT_LLM_KEEP_ALIVE: "0"
+    volumes:
+      - type: bind
+        source: ./src/ai_support
+        target: /app/src/ai_support
+        read_only: true

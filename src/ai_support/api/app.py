@@ -1,5 +1,8 @@
 """FastAPI application entry point."""
 
+# campus-performance-v1
+from ai_support.performance import run_ai
+
 import os
 import time
 from pathlib import Path
@@ -128,7 +131,8 @@ def create_app() -> FastAPI:
         if principal.audience != audience:
             raise HTTPException(status_code=403, detail="audience access denied")
         try:
-            prediction = request.app.state.router_service.predict(
+            prediction = await run_ai(
+                request.app.state.router_service.predict,
                 audience,
                 payload.ticket_subject,
                 payload.ticket_description,
@@ -168,7 +172,7 @@ def create_app() -> FastAPI:
         if service is None:
             raise HTTPException(status_code=503, detail="RAG database is not configured")
         try:
-            results = service.search(audience, payload.query, payload.department)
+            results = await run_ai(service.search, audience, payload.query, payload.department)
         except (FileNotFoundError, PsycopgError) as error:
             raise HTTPException(
                 status_code=503, detail="approved RAG release unavailable"
@@ -201,7 +205,7 @@ def create_app() -> FastAPI:
         if service is None:
             raise HTTPException(status_code=503, detail="chat service is not configured")
         try:
-            return service.respond(principal, payload.message)
+            return await run_ai(service.respond, principal, payload.message)
         except PermissionError as error:
             raise HTTPException(status_code=403, detail="agent tool access denied") from error
 
@@ -244,6 +248,9 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="message unavailable") from error
         return FeedbackResponse()
 
+    from ai_support.visitor.routes import register_visitor_routes
+
+    register_visitor_routes(application, current_principal)
     return application
 
 

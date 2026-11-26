@@ -1,5 +1,9 @@
 """Ollama answer generation constrained to authorized evidence."""
 
+# campus-performance-v1
+import os
+import httpx
+
 import time
 from typing import Protocol
 
@@ -29,7 +33,7 @@ class OllamaAnswerGenerator:
         client: Client | None = None,
     ) -> None:
         self.model = model
-        self.client = client or Client(host=host)
+        self.client = client or Client(host=host, timeout=120.0)
 
     def answer(self, question: str, evidence: list[str]) -> str:
         numbered = "\n\n".join(
@@ -52,13 +56,14 @@ class OllamaAnswerGenerator:
                     {"role": "user", "content": f"QUESTION:\n{question}\n\n{numbered}"},
                 ],
                 format=GroundedAnswer.model_json_schema(),
-                options={"temperature": 0},
+                options={"temperature": 0, "num_ctx": 4096, "num_predict": 384},
+                keep_alive=os.getenv("AI_SUPPORT_LLM_KEEP_ALIVE", "0"),
                 stream=False,
             )
             parsed = GroundedAnswer.model_validate_json(response.message.content)
             outcome = "success"
             return parsed.answer
-        except (ResponseError, OSError, ValueError) as error:
+        except (ResponseError, OSError, ValueError, httpx.HTTPError) as error:
             raise LLMUnavailableError("Ollama answer generation failed") from error
         finally:
             LLM_DURATION.labels(self.model, outcome).observe(time.perf_counter() - started)
